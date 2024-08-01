@@ -1,6 +1,12 @@
 # 微软GraphRAG源码理解
 
-## 1.探究GraphRAG原理
+## 1.引言
+
+2024年四月份，微软发布一篇文章《From Local to Global: A Graph RAG Approach to Query-Focused Summarization》，提出了graphRAG的方法，该方法很好地解决了典型RAG系统在以查询为中心的摘要 (QFS) 任务上存在的问题，并且在生成答案的全面性和多样性方面，Graph RAG 比朴素的 RAG 基线有了显着的改进。
+
+2024年六月份，微软开源了graphRAG的项目（https://github.com/microsoft/graphrag），为RAG带来新的发展，因此本人想从论文的原理以及源码部分去剖析和解读，希望进一步理解其核心结构，以求能做出一些速度上的优化
+
+## 2.探究GraphRAG原理
 
 - 为什么要在传统的RAG上发展GraphRAG？什么是GraphRAG？
 
