@@ -166,7 +166,7 @@ python -m graphrag.index --root ./ragtest
 
 我们使用code2flow库生成index_cli的调用链的流程图，如下图所示
 
-![index](images\index.svg)
+![index](images/index.svg)
 
 （1）该函数的_initialize_project_at函数首先检查settings.yaml、.env、prompts等文件是否存在，没有就创建，其中settings.yaml主要是记录llm的api_key、embedding的api_key,并行化的配置、异步模型的配置、文本分块、本地搜索、全局搜索配置等一些信息；env中就是graph_rag的api_key，prompts中主要是实体的提取、实体描述的总结、提取实体的声明、社区报告的生成的提示词
 
@@ -382,5 +382,5 @@ result = PipelineConfig(
 
 
 
-![](images\pipeline.svg)
+![](images/pipeline.svg)
 
