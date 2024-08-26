@@ -1,0 +1,78 @@
+digraph G {
+concentrate=true;
+splines="ortho";
+rankdir="LR";
+subgraph legend{
+    rank = min;
+    label = "legend";
+    Legend [shape=none, margin=0, label = <
+        <table cellspacing="0" cellpadding="0" border="1"><tr><td>Code2flow Legend</td></tr><tr><td>
+        <table cellspacing="0">
+        <tr><td>Regular function</td><td width="50px" bgcolor='#cccccc'></td></tr>
+        <tr><td>Trunk function (nothing calls this)</td><td bgcolor='#966F33'></td></tr>
+        <tr><td>Leaf function (this calls nothing else)</td><td bgcolor='#6db33f'></td></tr>
+        <tr><td>Function call</td><td><font color='black'>&#8594;</font></td></tr>
+        </table></td></tr></table>
+        >];
+}node_0b8c7dba [label="383: _community_workflows()" name="create_pipeline_config::_community_workflows" shape="rect" style="rounded,filled" fillcolor="#cccccc" ];
+node_64e25208 [label="435: _covariate_workflows()" name="create_pipeline_config::_covariate_workflows" shape="rect" style="rounded,filled" fillcolor="#6db33f" ];
+node_1282a113 [label="155: _determine_skip_workflows()" name="create_pipeline_config::_determine_skip_workflows" shape="rect" style="rounded,filled" fillcolor="#6db33f" ];
+node_844797a8 [label="181: _document_workflows()" name="create_pipeline_config::_document_workflows" shape="rect" style="rounded,filled" fillcolor="#cccccc" ];
+node_7d732d54 [label="559: _get_cache_config()" name="create_pipeline_config::_get_cache_config" shape="rect" style="rounded,filled" fillcolor="#6db33f" ];
+node_b2220182 [label="144: _get_embedded_fields()" name="create_pipeline_config::_get_embedded_fields" shape="rect" style="rounded,filled" fillcolor="#6db33f" ];
+node_bcefd01a [label="262: _get_embedding_settings()" name="create_pipeline_config::_get_embedding_settings" shape="rect" style="rounded,filled" fillcolor="#6db33f" ];
+node_4d0319b6 [label="453: _get_pipeline_input_config()" name="create_pipeline_config::_get_pipeline_input_config" shape="rect" style="rounded,filled" fillcolor="#6db33f" ];
+node_971e0320 [label="488: _get_reporting_config()" name="create_pipeline_config::_get_reporting_config" shape="rect" style="rounded,filled" fillcolor="#6db33f" ];
+node_26e95fc3 [label="519: _get_storage_config()" name="create_pipeline_config::_get_storage_config" shape="rect" style="rounded,filled" fillcolor="#6db33f" ];
+node_c067c7a8 [label="286: _graph_workflows()" name="create_pipeline_config::_graph_workflows" shape="rect" style="rounded,filled" fillcolor="#cccccc" ];
+node_50e8ce2a [label="165: _log_llm_settings()" name="create_pipeline_config::_log_llm_settings" shape="rect" style="rounded,filled" fillcolor="#6db33f" ];
+node_6b038bef [label="214: _text_unit_workflows()" name="create_pipeline_config::_text_unit_workflows" shape="rect" style="rounded,filled" fillcolor="#cccccc" ];
+node_80585cc9 [label="110: create_pipeline_config()" name="create_pipeline_config::create_pipeline_config" shape="rect" style="rounded,filled" fillcolor="#cccccc" ];
+node_fb6893f6 [label="47: join()" name="dataframes::join" shape="rect" style="rounded,filled" fillcolor="#cccccc" ];
+node_ad4e7541 [label="67: _merge_json()" name="merge::_merge_json" shape="rect" style="rounded,filled" fillcolor="#6db33f" ];
+node_5d4b24e8 [label="33: merge()" name="merge::merge" shape="rect" style="rounded,filled" fillcolor="#cccccc" ];
+node_0b8c7dba -> node_bcefd01a [color="#56B4E9" penwidth="2"];
+node_0b8c7dba -> node_bcefd01a [color="#56B4E9" penwidth="2"];
+node_0b8c7dba -> node_bcefd01a [color="#56B4E9" penwidth="2"];
+node_844797a8 -> node_bcefd01a [color="#000000" penwidth="2"];
+node_c067c7a8 -> node_bcefd01a [color="#000000" penwidth="2"];
+node_c067c7a8 -> node_bcefd01a [color="#000000" penwidth="2"];
+node_c067c7a8 -> node_bcefd01a [color="#000000" penwidth="2"];
+node_6b038bef -> node_bcefd01a [color="#CC79A7" penwidth="2"];
+node_80585cc9 -> node_0b8c7dba [color="#E69F00" penwidth="2"];
+node_80585cc9 -> node_64e25208 [color="#E69F00" penwidth="2"];
+node_80585cc9 -> node_1282a113 [color="#E69F00" penwidth="2"];
+node_80585cc9 -> node_844797a8 [color="#E69F00" penwidth="2"];
+node_80585cc9 -> node_7d732d54 [color="#E69F00" penwidth="2"];
+node_80585cc9 -> node_b2220182 [color="#E69F00" penwidth="2"];
+node_80585cc9 -> node_4d0319b6 [color="#E69F00" penwidth="2"];
+node_80585cc9 -> node_971e0320 [color="#E69F00" penwidth="2"];
+node_80585cc9 -> node_26e95fc3 [color="#E69F00" penwidth="2"];
+node_80585cc9 -> node_c067c7a8 [color="#E69F00" penwidth="2"];
+node_80585cc9 -> node_50e8ce2a [color="#E69F00" penwidth="2"];
+node_80585cc9 -> node_6b038bef [color="#E69F00" penwidth="2"];
+node_80585cc9 -> node_fb6893f6 [color="#E69F00" penwidth="2"];
+node_fb6893f6 -> node_5d4b24e8 [color="#D55E00" penwidth="2"];
+node_5d4b24e8 -> node_ad4e7541 [color="#000000" penwidth="2"];
+subgraph cluster_30032352 {
+    node_80585cc9 node_b2220182 node_1282a113 node_50e8ce2a node_844797a8 node_6b038bef node_bcefd01a node_c067c7a8 node_0b8c7dba node_64e25208 node_4d0319b6 node_971e0320 node_26e95fc3 node_7d732d54;
+    label="File: create_pipeline_config";
+    name="create_pipeline_config";
+    style="filled";
+    graph[style=dotted];
+};
+subgraph cluster_debdd218 {
+    node_fb6893f6;
+    label="File: dataframes";
+    name="dataframes";
+    style="filled";
+    graph[style=dotted];
+};
+subgraph cluster_c8ac0bb2 {
+    node_5d4b24e8 node_ad4e7541;
+    label="File: merge";
+    name="merge";
+    style="filled";
+    graph[style=dotted];
+};
+}
