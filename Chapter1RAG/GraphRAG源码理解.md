@@ -12,9 +12,9 @@
 
 - 为什么要在传统的RAG上发展GraphRAG？什么是GraphRAG？
 
-传统RAG在针对整个文本语料库的全局问题上回答不佳，比如：这个数据集的主要主题是什么？这种问题不是简单的检索任务，是聚焦于查询的总结性任务。
+传统RAG在针对整个文本语料库的全局问题上回答不佳，比如：这个数据集的主要主题是什么？这种问题不是简单的检索任务，是聚焦于全局查询的总结性任务。
 
-GraphRAG核心思想：首先从源文档中派生一个实体知识图谱（通过大模型提取实体、关系，社区检测提取社区），然后为所有密切相关的实体组预先生成社区摘要。给定一个问题，每个社区摘要都用于生成部分响应，然后再次将所有部分响应汇总到对用户的最终响应中
+GraphRAG核心思想：首先从源文档中派生一个实体知识图谱（通过大模型提取实体、关系，社区检测提取社区），然后为所有密切相关的实体组预先生成社区摘要。如果是全局搜索，汇总与用户问题有关的社区摘要最终生成一个全局性的答案；如果是局部搜索，会检索问题中的实体，找到实体相关边和实体，汇总最终生成答案。
 
 ![entity](images/entity.png)
 
@@ -56,13 +56,13 @@ graphRAG中的一些名词：
 
 - 准备社区摘要，社区摘要被随机打乱并分成预先指定的token大小的块。这确保了相关信息分布在各个块中，而不是集中（并可能丢失）在单个上下文窗口中；
 - 映射社区答案。并行生成中间答案，每个块一个。这LLM还要求生成 0-100 之间的分数，表明生成的答案对于回答目标问题有多大帮助。得分为 0 的答案将被过滤掉。
-- 减少到全局答案。中间社区答案按有用性分数的降序排序，并迭代添加到新的上下文窗口中，直到达到令牌限制。最终上下文用于生成返回给用户的全局答案。
+- reduce到全局答案。中间社区答案按有用性分数的降序排序，并迭代添加到新的上下文窗口中，直到达到令牌限制。最终上下文用于生成返回给用户的全局答案。
 
 最终提供两种搜索的方法：本地搜索和全局搜索
 
 **本地搜索：**本地搜索方法通过将人工智能提取的知识图谱中的相关数据与原始文档的文本块相结合来生成答案。此方法适用于需要了解文档中提到的特定实体的问题（例如洋甘菊的治疗特性是什么？）
 
-**全局搜索：**全局搜索方法通过以地图缩减方式搜索所有人工智能生成的社区报告来生成答案。这是一种资源密集型方法，但通常可以很好地回答需要理解整个数据集的问题（例如，本笔记本中提到的草药最重要的价值是什么？）
+**全局搜索：**全局搜索方法通过以map-reduce方式搜索所有大模型生成的社区报告来生成答案。这是一种资源密集型方法，但通常可以很好地回答需要理解整个数据集的问题（例如，本笔记本中提到的草药最重要的价值是什么？）
 
 ## 3.源码结构
 
@@ -286,61 +286,6 @@ result = PipelineConfig(
 
 这些verb定义操作的具体实现在index/verbs中，有一些基础的verb是datashaper库自带的
 
-现在我们对创建的workflows进行一个细致的解释，PipelineConfig中根据workflows/v1下的模板进行创建的，一共包括五个workflow，分别为：
-
-- _document_workflows：对文本数据的处理，包括展开数组列、选择和重命名列、连接数据表、聚合数据、以及类型转换
-
-- _text_unit_workflows：提取出基本的文本单元（text units），并对其进行一系列的数据处理，包括排序、打包、切分、重命名、生成ID、以及过滤空数据等操作
-
-- _graph_workflows：提取实体数据，使用 `chunk` 列作为文本输入列，`chunk_id` 作为 ID 列，并将提取的实体保存到 `entities` 列，合并多个实体图（如多次提取的结果），将这些图的节点和边按指定操作进行合并。然后为提取的实体创建描述摘要，对实体图进行聚类，并将结果保存到 `clustered_graph` 列中，从聚类后的图中提取实体，生成最终的实体表，从聚类图中提取关系信息，生成最终的关系表
-
-- _community_workflows：
-
-  **准备节点数据 (`prepare_community_reports_nodes`)**
-
-  - **描述**：这是一个子工作流，用于处理节点（通常代表实体）数据。输入源是从 `workflow:create_final_nodes` 中获取的节点数据。
-  - **作用**：准备节点数据，为后续操作奠定基础。
-
-  **准备边数据 (`prepare_community_reports_edges`)**
-
-  - **描述**：这个子工作流处理边（关系）数据，输入源是从 `workflow:create_final_relationships` 中获取的关系数据。
-  - **作用**：准备社区内实体之间的关系数据。
-
-  **准备声明数据表 (`prepare_community_reports_claims`)**
-
-  - **描述**：当 `covariates_enabled` 配置为启用时，处理与社区报告相关的声明数据。输入源是 `workflow:create_final_covariates`。
-  - **作用**：生成包含社区报告相关声明的表。
-
-  **获取社区层次结构 (`restore_community_hierarchy`)**
-
-  - **描述**：从节点数据中恢复社区的层次结构，确定各节点的层级关系。
-  - **作用**：构建社区内实体的层级关系，为社区报告提供结构性信息。
-
-  **创建社区报告 (`prepare_community_reports`)**
-
-  - **描述**：这是主工作流的一部分，整合节点、边和声明数据（如果启用）来准备社区报告的上下文信息。
-  - **作用**：生成包含社区内实体、关系及相关声明的上下文信息，为最终社区报告的生成做准备。
-
-  **生成社区报告 (`create_community_reports`)**
-
-  - **描述**：根据准备好的上下文信息生成社区报告。此步骤结合了配置中的各项参数来生成最终的报告内容。
-  - **作用**：生成最终的社区报告数据表。
-
-  **为每个社区报告生成唯一 ID (`window`)**
-
-  - **描述**：为每个生成的社区报告分配一个唯一的 UUID，区别于社区 ID。
-  - **作用**：确保社区报告的唯一性和可区分性。
-
-  **文本嵌入（文本内容、摘要、标题） (`text_embed`)**
-
-  - 描述：将社区报告的完整内容、摘要和标题进行文本嵌入（text embedding），生成相应的嵌入向量，用于进一步的分析或机器学习任务。具体操作包括：
-    - `community_report_full_content`：对报告的完整内容进行嵌入。
-    - `community_report_summary`：对报告的摘要进行嵌入。
-    - `community_report_title`：对报告的标题进行嵌入。
-  - **作用**：将文本数据转换为嵌入向量，为后续的语义分析和机器学习提供基础
-
-- _covariate_workflows：通过一系列的数据处理步骤，从text_units提取信息并转换为结构化的协变量表
-
 ![](images/pipeline.svg)
 
 #### （3）执行pipeline
@@ -452,5 +397,397 @@ sentence策略则是直接调用nltk库，将文本划分为一个个句子
 
 代码在graphrag/index/workflows/v1目录下，包含了四个verb：entity_extract、snapshot、merge_graphs、snapshot_rows
 
+这些verbs的具体实现也可以在graphrag/index/verbs中找到
+
+这里entity_extract提取实体也有两种策略，一种是graph_intelligence，另一种是nltk。
+
+**graph_intelligence**：通过大模型和前面所说的提取实体的提示词，来最终从文本中提取实体
+
+**nltk**：通过nltk的`ne_chunk` 进行命名实体识别，首先对文本进行分词（`word_tokenize`）和词性标注（`pos_tag`），然后识别命名实体，对于识别出的每个实体 `chunk`，如果它具有 `label`（即是一个命名实体），则获取其类型 `entity_type` 并检查是否在 `entity_types` 列表中，如果在同一文档中发现了多个实体，函数会将它们两两相连，在图中添加边（`edge`），并为每条边附加描述和源文档ID
 
 
+
+**snapshot**是将提取到的实体保存成parquet格式或者json格式
+
+**merge_graphs**将多个图（graph）合并为一个图。这个函数通过使用节点和边的操作，将不同的图合并，最终生成一个图，将合并后的图导出为 GraphML 格式并存储在输出数据框的指定列中
+
+**snapshot_rows**对数据表中的每一行进行快照，并将快照结果存储在指定的位置
+
+### （5）create_summarized_entities
+
+包含两个verb：summarize_descriptions和snapshot_rows
+
+**summarize_descriptions**只有一个策略：graph_intelligence，这个策略就是通过大模型和之前提到的实体总结的提示词，生成对每个实体和边的描述总结，总结后的结果以 GraphML 格式存储
+
+**snapshot_rows**对数据表中的每一行进行快照，并将快照结果存储在指定的位置
+
+### （6）create_base_entity_graph
+
+包含五个verb：cluster_graph、snapshot_rows、embed_graph、snapshot_rows、select
+
+**cluster_graph**：使用Leiden 算法将图形中的节点分配到不同的社区（clusters）中，并生成相应的聚类图
+
+**主要步骤**：
+
+- **图形聚类**：调用 `run_layout` 函数（主要是leiden算法）对图进行聚类。结果存储在 `community_map_to` 列中。
+- **计算聚类层次**：提取聚类的层次信息并存储到 `level_to` 列中。
+- **应用聚类**：对每一行数据，根据不同的层次应用聚类，并将结果存储到 `to` 列中。
+- **数据表操作**：最终，将聚类层次和图形数据分解为独立的列，并返回处理后的数据表
+
+**embed_graph**：将图（graph）嵌入到一个向量空间中。主要通过指定的策略（如 `node2vec`）来生成图中节点的向量表示
+
+`node2vec` 是一种用于图嵌入的技术，通过模拟随机游走（random walks），将图中的节点转换为固定维度的向量
+
+### （7）create_final_entities
+
+将base_entity_graph中的节点信息提取、清洗、嵌入，并生成一个包含实体名称及其描述嵌入向量的最终实体表
+
+包含的verb如下：
+
+**`unpack_graph`**：从graphml格式的图中提取节点（实体）和边。
+
+**`rename`**：将节点的 `label` 列重命名为 `title`，然后进一步将 `title` 重命名为 `name`。
+
+**`select`**：选择感兴趣的列，如 `id`、`name`、`type` 等。
+
+**`dedupe`**：对实体进行去重，确保每个实体只有一个唯一的 `id`。
+
+**`filter`**：过滤掉名称为空的实体。
+
+**`text_split`**：将 `source_id` 列按逗号分隔，并将结果存入 `text_unit_ids` 列。
+
+**`drop`**：删除不再需要的 `source_id` 列。
+
+**`text_embed`**（两次）：执行文本嵌入操作，分别对实体名称和名称+描述进行嵌入，生成向量表示。
+
+**`merge`**：将 `name` 和 `description` 列合并为一个新列 `name_description`，用于后续的嵌入。
+
+**`filter`**：在不使用向量存储的情况下，过滤掉嵌入为空的描述
+
+### （8）create_final_nodes
+
+主要步骤如下：
+
+**配置获取**：
+
+- **`snapshot_top_level_nodes`**：从配置中获取是否对顶层节点进行快照（保存节点信息），默认为 `False`。
+- **`layout_graph_enabled`**：检查是否启用图布局（默认为 `True`），如果未启用，布局策略将使用 "zero"（表示不进行布局）。
+- **`_compute_top_level_node_positions`**：定义了一组步骤，用于计算和处理顶层节点的位置。包括从图中解包节点、过滤指定层次的节点、选择坐标信息、对顶层节点进行快照、重命名和转换节点 ID 等操作。
+
+**布局图**：
+
+- **`layout_graph`**：帮助用户对图形数据进行布局和可视化操作。支持的布局策略包括 UMAP 和 Zero，可以根据需要选择不同的算法进行节点位置的计算，并将结果应用到图形中，用于进一步的分析或可视化展示。
+
+**节点信息解包和处理**：
+
+- **`unpack_graph`**：从 `positioned_graph` 列中解包节点信息，提取每个节点的属性。
+- **`drop`**：去掉没有位置（`x` 和 `y` 坐标）的节点列。
+
+**顶层节点的位置计算和处理**：
+
+- 包含多个步骤，如过滤指定层次的节点、快照保存、重命名 ID、以及将 ID 转换为字符串格式。这些操作旨在处理顶层节点并确保它们的位置信息正确无误。
+
+**节点连接**：
+
+- **`join`**：将之前处理的顶层节点与原始的无位置节点表进行关联，基于 `id` 和 `top_level_node_id` 进行连接，整合顶层节点的位置数据。
+
+**节点信息重命名**：
+
+- **`rename`**：将节点的 `label` 列重命名为 `title`，将 `cluster` 列重命名为 `community`，以便更好地描述节点信息。
+
+### （9）create_final_communities
+
+从基础实体图中提取信息并构建社区关系表，最后输出一个包含社区信息的表格
+
+主要步骤如下：
+
+**基础实体图解包 (`unpack_graph`)**：
+
+- 代码从 `workflow:create_base_entity_graph` 中提取基础实体图，并将图中的节点和边分别解包成独立的数据集，分别命名为 `graph_nodes` 和 `graph_edges`。
+
+**节点和边的关联 (`join`)**：
+
+- 接着，代码分别将 `graph_nodes` 与 `graph_edges` 按照 `label` 字段进行连接，生成 `source_clusters` 和 `target_clusters`。这些步骤的目的是将节点与其关联的边连接起来。
+
+**合并与过滤 (`concat` 和 `filter`)**：
+
+- 将 `source_clusters` 和 `target_clusters` 合并为 `concatenated_clusters`，然后通过过滤步骤保留那些连接在一起且级别相同的节点对，结果存储在 `combined_clusters` 中。
+
+**聚合社区关系 (`aggregate_override`)**：
+
+- 对合并后的节点和边进行聚合，创建 `cluster_relationships`，其目的是为每个社区（cluster）生成关系 ID 列表和文本单元 ID 列表。
+
+**所有社区的聚合 (`aggregate_override`)**：
+
+- 再次聚合，生成 `all_clusters`，以便提取每个社区的唯一 ID 和层级信息。
+
+**社区信息关联 (`join`)**：
+
+- 将 `all_clusters` 与 `cluster_relationships` 连接，生成一个包含社区关系和层级信息的表。
+
+**社区标题创建**：
+
+- 在这一步中，代码通过 `create_community_title_wf` 定义的步骤为每个社区生成一个标题（`title`），格式为 `"Community " + id`。
+
+**选择最终列 (`select`)**：
+
+- 最后，代码选择关键列（如 `id`、`title`、`level`、`relationship_ids`、`text_unit_ids`）来构建最终的社区表
+
+### （10）join_text_units_to_entity_ids
+
+生成一个从文本单元 ID 到实体 ID 的关联表格，这可以用于在文本数据和实体数据之间建立映射关系
+
+具体步骤：
+
+**选择列 (`select`)**：
+
+- 从 `workflow:create_final_entities` 中选择 `id` 和 `text_unit_ids` 列。这一步的目的是从实体表中提取出实体的 ID 以及与之关联的文本单元 ID。
+
+**展开文本单元 ID (`unroll`)**：
+
+- 将 `text_unit_ids` 列展开，即将原本可能是列表形式的文本单元 ID 分成多行，每个文本单元 ID 对应一行。这使得每个文本单元 ID 都有一个独立的行，与其对应的实体 ID 保持关联。
+
+**聚合和重命名 (`aggregate_override`)**：
+
+- 通过对 `text_unit_ids` 进行分组，聚合对应的实体 ID 列表，并将结果存储在 `entity_ids` 列中。
+- 另外，对 `text_unit_ids` 列应用 `any` 操作，以确保它们在聚合后的表中仍然可用，并将其存储在 `id` 列中
+
+### （11）create_final_relationships
+
+生成一个包含最终关系信息的表格，其中包括文本嵌入、边信息的组合度数计算以及与文本单元的关联信息
+
+具体步骤：
+
+**配置获取**：
+
+- **`base_text_embed`**：从配置中获取基础的文本嵌入配置，用于在后续的文本嵌入步骤中使用。
+- **`relationship_description_embed_config`**：获取关系描述的嵌入配置，如果没有单独配置，使用基础的文本嵌入配置。
+- **`skip_description_embedding`**：检查是否需要跳过描述的嵌入操作。
+
+**图形关系边的解包 (`unpack_graph`)**：
+
+- 从 `workflow:create_base_entity_graph` 中提取图形关系边，将图形的边信息解包并存储在 `clustered_graph` 列中。
+
+**重命名列 (`rename`)**：
+
+- 将 `source_id` 列重命名为 `text_unit_ids`，以便后续处理。
+
+**过滤层级 (`filter`)**：
+
+- 通过过滤操作，仅保留层级为 `0` 的边信息。
+
+**描述文本嵌入 (`text_embed`)**：
+
+- 如果未跳过描述嵌入操作，将 `description` 列中的文本进行嵌入，生成 `description_embedding`。
+
+**删除层级列 (`drop`)**：
+
+- 删除不再需要的 `level` 列，将结果存储在 `pruned_edges` 中。
+
+**过滤节点 (`filter`)**：
+
+- 从 `workflow:create_final_nodes` 中提取并过滤节点信息，保留层级为 `0` 的节点，结果存储在 `filtered_nodes` 中。
+
+**计算边的组合度数 (`compute_edge_combined_degree`)**：
+
+- 计算边的组合度数，并将结果存储在 `rank` 列中。
+
+**转换列类型 (`convert`)**：
+
+- 将 `human_readable_id` 转换为字符串类型，并将 `text_unit_ids` 转换为数组类型，以便于后续处理和分析。
+
+### （12）join_text_units_to_relationship_ids
+
+生成一个从文本单元 ID 到关系 ID 的关联表格，使得每个文本单元 ID 都能映射到与之关联的关系 ID 列表
+
+具体步骤：
+
+**选择列 (`select`)**：
+
+- 从 `workflow:create_final_relationships` 生成的关系表中选择 `id` 和 `text_unit_ids` 列。这一步是从最终生成的关系表中提取所需的列，`id` 表示关系 ID，`text_unit_ids` 表示与该关系关联的文本单元 ID 列表。
+
+**展开文本单元 ID (`unroll`)**：
+
+- 将 `text_unit_ids` 列展开，即将每个关系 ID 关联的文本单元 ID 列表展开为多个单独的行。这样每个文本单元 ID 都有自己的一行，并且仍然与其对应的关系 ID 保持关联。
+
+**聚合和重命名 (`aggregate_override`)**：
+
+- 对 `text_unit_ids` 进行分组，聚合与其关联的 `id`（关系 ID）并将结果存储在 `relationship_ids` 列中。这一步将所有与某个文本单元 ID 关联的关系 ID 汇总在一起。
+- 同时，将 `text_unit_ids` 列通过 `any` 操作保留下来，并将其重命名为 `id`。
+
+**选择最终列 (`select`)**：
+
+- 选择最终输出的列，生成 `text_unit_id_to_relationship_ids` 表格，该表格包含 `id`（即 `text_unit_ids`）和 `relationship_ids` 列，用于描述每个文本单元 ID 关联的关系 ID 列表。
+
+### （13）create_final_community_reports
+
+生成一个包含社区报告的表格，报告包括嵌入的文本内容，并结合社区的节点、边和层级信息
+
+**配置获取**：
+
+- **`covariates_enabled`**：从配置中获取是否启用协变量处理，如果启用，将在社区报告中包含协变量信息。
+- **嵌入配置**：包括 `community_report_full_content_embed_config`、`community_report_summary_embed_config` 和 `community_report_title_embed_config`，这些配置用于控制文本嵌入的具体实现。
+- **跳过嵌入标志**：根据配置确定是否跳过标题、摘要和完整内容的嵌入处理。
+
+**节点、边和主张表的准备**：
+
+- **`prepare_community_reports_nodes`** 和 **`prepare_community_reports_edges`**：分别准备用于社区报告的节点和边信息。
+- **`prepare_community_reports_claims`**：如果启用了协变量处理，还会准备主张表。
+
+**恢复社区层级 (`restore_community_hierarchy`)**：
+
+- 从节点信息中恢复社区层级结构，以便在后续的报告生成过程中使用。
+
+**生成社区报告 (`prepare_community_reports`)**：
+
+- 结合节点、边和层级信息，生成社区的上下文信息，准备社区报告的内容。
+
+**创建社区报告 (`create_community_reports`)**：
+
+- 使用社区报告配置，创建最终的社区报告。
+
+**生成唯一ID (`window`)**：
+
+- 为每个社区报告生成一个唯一的ID，与社区ID区分开。
+
+**文本嵌入 (`text_embed`)**：
+
+- 为社区报告的完整内容、摘要和标题分别生成嵌入向量，便于后续的分析或搜索
+
+### （14）create_final_text_units
+
+生成一个包含最终文本单元的表格，该表格包含文本内容及其嵌入表示、相关的实体和关系信息，以及可选的协变量信息
+
+**配置获取**：
+
+- **`base_text_embed`**：从配置中获取基础的文本嵌入配置，用于后续文本嵌入步骤。
+- **`text_unit_text_embed_config`**：获取特定的文本单元嵌入配置，如果没有单独配置，使用基础的文本嵌入配置。
+- **`covariates_enabled`**：检查是否启用了协变量处理，这决定是否将协变量信息加入到最终的文本单元表中。
+- **`skip_text_unit_embedding`**：检查是否跳过文本单元的嵌入处理。
+- **`is_using_vector_store`**：检查是否使用了向量存储，影响最终输出的列。
+
+**选择基础列 (`select`)**：
+
+- 从 `workflow:create_base_text_units` 中选择 `id`, `chunk`, `document_ids` 和 `n_tokens` 列。这些列是构建文本单元的基础信息。
+
+**重命名列 (`rename`)**：
+
+- 将 `chunk` 列重命名为 `text`，以便后续处理和分析。
+
+**扩展文本单元与实体 ID 的关联 (`join`)**：
+
+- 使用 `join` 操作，将 `workflow:join_text_units_to_entity_ids` 生成的实体 ID 与文本单元关联。
+
+**扩展文本单元与关系 ID 的关联 (`join`)**：
+
+- 使用 `join` 操作，将 `workflow:join_text_units_to_relationship_ids` 生成的关系 ID 与文本单元关联。
+
+**扩展文本单元与协变量 ID 的关联 (`join`)**：
+
+- 如果启用了协变量处理，使用 `join` 操作，将 `workflow:join_text_units_to_covariate_ids` 生成的协变量 ID 与文本单元关联。
+
+**聚合文本单元的实体和关系信息 (`aggregate_override`)**：
+
+- 使用 `aggregate_override` 对文本单元进行聚合，将文本、令牌数量、文档 ID、实体 ID、关系 ID 等信息整合到一起。如果启用了协变量，也会包含协变量 ID。
+
+**文本嵌入 (`text_embed`)**：
+
+- 对聚合后的文本单元进行嵌入处理，生成文本的向量表示，存储在 `text_embedding` 列中。
+
+**最终选择列 (`select`)**：
+
+- 最后一步，选择最终的输出列，确保表格的结构符合预期。输出的列包括 `id`, `text`, `n_tokens`, `document_ids`, `entity_ids`, `relationship_ids` 以及 `text_embedding`（如果启用了嵌入且未使用向量存储）
+
+### （15）create_base_documents
+
+生成一个包含文档及其相关文本单元的表格
+
+**配置获取**：
+
+- **`document_attribute_columns`**：从配置中获取文档属性列的列表，这些列将在后续步骤中被处理。
+
+**展开文档 ID 列 (`unroll`)**：
+
+- 从 `workflow:create_final_text_units` 中获取数据，将 `document_ids` 列展开，即将包含多个文档 ID 的行分解为多行，使每个文档 ID 具有自己的一行。
+
+**选择列 (`select`)**：
+
+- 选择 `id`、`document_ids` 和 `text` 列。`id` 代表文本单元的 ID，`document_ids` 代表对应的文档 ID，`text` 则是文本内容。
+
+**重命名列 (`rename`)**：
+
+- 将 `document_ids` 重命名为 `chunk_doc_id`，将 `id` 重命名为 `chunk_id`，将 `text` 重命名为 `chunk_text`，以便后续的关联操作。
+
+**关联文档和文本单元 (`join`)**：
+
+- 将重命名后的数据与原始文档表进行关联，基于 `chunk_doc_id` 和文档 ID 的匹配，确保每个文档都包含相应的文本单元信息。
+
+**聚合文本单元 (`aggregate_override`)**：
+
+- 对文档进行分组，将 `chunk_id` 列聚合为一个数组，并存储在 `text_units` 列中，这样每个文档 ID 都包含与之相关的所有文本单元的 ID。
+
+**再次关联文档和文本单元 (`join`)**：
+
+- 使用右外连接（`right outer join`），将包含文本单元的文档数据与原始输入文档数据再次进行关联，确保每个文档都具有完整的文本单元信息。
+
+**重命名原始内容列 (`rename`)**：
+
+- 将文档中的 `text` 列重命名为 `raw_content`，表示文档的原始文本内容。
+
+**转换文档属性类型 (`convert`)**：
+
+- 对 `document_attribute_columns` 中指定的列进行数据类型转换，确保这些列被转换为字符串格式，以便于后续的合并操作。
+
+**合并文档属性 (`merge_override`)**：
+
+- 如果文档属性列存在，则将这些属性列合并为一个 JSON 字符串，并存储在 `attributes` 列中。
+
+**转换文档 ID 类型 (`convert`)**：
+
+- 最后，将 `id` 列（即文档 ID）转换为字符串格式，确保 ID 的格式统一。
+
+### （16）create_final_documents
+
+生成一个最终的文档表格，表格中包含每个文档的文本单元 ID 列表以及文档原始内容的嵌入向量
+
+具体步骤：
+
+**配置获取**：
+
+- **`base_text_embed`**：从配置中获取基础文本嵌入的配置。
+- **`document_raw_content_embed_config`**：获取用于文档原始内容的文本嵌入配置，如果没有单独配置，使用基础的文本嵌入配置。
+- **`skip_raw_content_embedding`**：检查是否跳过对文档原始内容的嵌入操作。
+
+**重命名列 (`rename`)**：
+
+- 通过重命名操作，将 `workflow:create_base_documents` 生成的表格中的 `text_units` 列重命名为 `text_unit_ids`。这一操作主要是为了更清晰地表示这些文本单元 ID 与文档的关联。
+
+**文本嵌入 (`text_embed`)**：
+
+- 对文档的原始内容 (`raw_content`) 进行文本嵌入，将嵌入后的向量表示存储在 `raw_content_embedding` 列中。如果 `skip_raw_content_embedding` 设置为 `True`，则跳过此步骤
+
+### 3.3 查询
+
+查询分为全局查询和局部查询，分别对应下面的命令
+
+```
+python -m graphrag.query \
+--root ./ragtest \
+--method global \
+"What are the top themes in this story?"
+```
+
+```
+python -m graphrag.query \
+--root ./ragtest \
+--method local \
+"Who is Tom?"
+```
+
+下面是用code2flow生成的局部查询和全局查询的流程图
+
+![global](images/global.svg)
+
+![local](images/local.svg)
+
+### （1）全局查询

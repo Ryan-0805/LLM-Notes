@@ -1,0 +1,148 @@
+digraph G {
+concentrate=true;
+splines="ortho";
+rankdir="LR";
+subgraph legend{
+    rank = min;
+    label = "legend";
+    Legend [shape=none, margin=0, label = <
+        <table cellspacing="0" cellpadding="0" border="1"><tr><td>Code2flow Legend</td></tr><tr><td>
+        <table cellspacing="0">
+        <tr><td>Regular function</td><td width="50px" bgcolor='#cccccc'></td></tr>
+        <tr><td>Trunk function (nothing calls this)</td><td bgcolor='#966F33'></td></tr>
+        <tr><td>Leaf function (this calls nothing else)</td><td bgcolor='#6db33f'></td></tr>
+        <tr><td>Function call</td><td><font color='black'>&#8594;</font></td></tr>
+        </table></td></tr></table>
+        >];
+}node_a0847ea5 [label="32: __init__()" name="chat_openai::ChatOpenAI.__init__" shape="rect" style="rounded,filled" fillcolor="#6db33f" ];
+node_7567eff8 [label="191: _configure_paths_and_settings()" name="cli::_configure_paths_and_settings" shape="rect" style="rounded,filled" fillcolor="#cccccc" ];
+node_17ca1554 [label="217: _create_graphrag_config()" name="cli::_create_graphrag_config" shape="rect" style="rounded,filled" fillcolor="#cccccc" ];
+node_1bb85b5a [label="205: _infer_data_dir()" name="cli::_infer_data_dir" shape="rect" style="rounded,filled" fillcolor="#6db33f" ];
+node_1522da9e [label="225: _read_config_parameters()" name="cli::_read_config_parameters" shape="rect" style="rounded,filled" fillcolor="#6db33f" ];
+node_5a2f8ae3 [label="83: run_global_search()" name="cli::run_global_search" shape="rect" style="rounded,filled" fillcolor="#cccccc" ];
+node_dd2f51e4 [label="24: __init__()" name="community_context::GlobalCommunityContext.__init__" shape="rect" style="rounded,filled" fillcolor="#6db33f" ];
+node_58f7e3f0 [label="225: read_community_reports()" name="dfs::read_community_reports" shape="rect" style="rounded,filled" fillcolor="#cccccc" ];
+node_0ce9d6f4 [label="29: read_entities()" name="dfs::read_entities" shape="rect" style="rounded,filled" fillcolor="#cccccc" ];
+node_a1c3fe68 [label="157: get_global_search_engine()" name="factories::get_global_search_engine" shape="rect" style="rounded,filled" fillcolor="#cccccc" ];
+node_80ddfd0c [label="35: get_llm()" name="factories::get_llm" shape="rect" style="rounded,filled" fillcolor="#cccccc" ];
+node_d92666cd [label="135: _filter_under_community_level()" name="indexer_adapters::_filter_under_community_level" shape="rect" style="rounded,filled" fillcolor="#6db33f" ];
+node_0d0f6948 [label="90: read_indexer_entities()" name="indexer_adapters::read_indexer_entities" shape="rect" style="rounded,filled" fillcolor="#cccccc" ];
+node_be2d6e2d [label="62: read_indexer_reports()" name="indexer_adapters::read_indexer_reports" shape="rect" style="rounded,filled" fillcolor="#cccccc" ];
+node_8b2007a6 [label="61: __init__()" name="search::GlobalSearch.__init__" shape="rect" style="rounded,filled" fillcolor="#6db33f" ];
+node_19901c12 [label="155: to_optional_float()" name="utils::to_optional_float" shape="rect" style="rounded,filled" fillcolor="#6db33f" ];
+node_acc58014 [label="114: to_optional_int()" name="utils::to_optional_int" shape="rect" style="rounded,filled" fillcolor="#6db33f" ];
+node_41ad628e [label="65: to_optional_list()" name="utils::to_optional_list" shape="rect" style="rounded,filled" fillcolor="#6db33f" ];
+node_255dddb0 [label="22: to_optional_str()" name="utils::to_optional_str" shape="rect" style="rounded,filled" fillcolor="#6db33f" ];
+node_ada10d99 [label="10: to_str()" name="utils::to_str" shape="rect" style="rounded,filled" fillcolor="#6db33f" ];
+node_7567eff8 -> node_17ca1554 [color="#000000" penwidth="2"];
+node_7567eff8 -> node_1bb85b5a [color="#000000" penwidth="2"];
+node_17ca1554 -> node_1522da9e [color="#F0E442" penwidth="2"];
+node_5a2f8ae3 -> node_7567eff8 [color="#009E73" penwidth="2"];
+node_5a2f8ae3 -> node_a1c3fe68 [color="#009E73" penwidth="2"];
+node_5a2f8ae3 -> node_0d0f6948 [color="#009E73" penwidth="2"];
+node_5a2f8ae3 -> node_be2d6e2d [color="#009E73" penwidth="2"];
+node_58f7e3f0 -> node_19901c12 [color="#000000" penwidth="2"];
+node_58f7e3f0 -> node_41ad628e [color="#000000" penwidth="2"];
+node_58f7e3f0 -> node_41ad628e [color="#000000" penwidth="2"];
+node_58f7e3f0 -> node_255dddb0 [color="#000000" penwidth="2"];
+node_58f7e3f0 -> node_ada10d99 [color="#000000" penwidth="2"];
+node_58f7e3f0 -> node_ada10d99 [color="#000000" penwidth="2"];
+node_58f7e3f0 -> node_ada10d99 [color="#000000" penwidth="2"];
+node_58f7e3f0 -> node_ada10d99 [color="#000000" penwidth="2"];
+node_58f7e3f0 -> node_ada10d99 [color="#000000" penwidth="2"];
+node_0ce9d6f4 -> node_acc58014 [color="#F0E442" penwidth="2"];
+node_0ce9d6f4 -> node_41ad628e [color="#F0E442" penwidth="2"];
+node_0ce9d6f4 -> node_41ad628e [color="#F0E442" penwidth="2"];
+node_0ce9d6f4 -> node_41ad628e [color="#F0E442" penwidth="2"];
+node_0ce9d6f4 -> node_41ad628e [color="#F0E442" penwidth="2"];
+node_0ce9d6f4 -> node_41ad628e [color="#F0E442" penwidth="2"];
+node_0ce9d6f4 -> node_41ad628e [color="#F0E442" penwidth="2"];
+node_0ce9d6f4 -> node_255dddb0 [color="#F0E442" penwidth="2"];
+node_0ce9d6f4 -> node_255dddb0 [color="#F0E442" penwidth="2"];
+node_0ce9d6f4 -> node_255dddb0 [color="#F0E442" penwidth="2"];
+node_0ce9d6f4 -> node_ada10d99 [color="#F0E442" penwidth="2"];
+node_0ce9d6f4 -> node_ada10d99 [color="#F0E442" penwidth="2"];
+node_a1c3fe68 -> node_dd2f51e4 [color="#000000" penwidth="2"];
+node_a1c3fe68 -> node_80ddfd0c [color="#000000" penwidth="2"];
+node_a1c3fe68 -> node_8b2007a6 [color="#000000" penwidth="2"];
+node_80ddfd0c -> node_a0847ea5 [color="#F0E442" penwidth="2"];
+node_0d0f6948 -> node_0ce9d6f4 [color="#000000" penwidth="2"];
+node_0d0f6948 -> node_d92666cd [color="#000000" penwidth="2"];
+node_be2d6e2d -> node_58f7e3f0 [color="#0072B2" penwidth="2"];
+node_be2d6e2d -> node_d92666cd [color="#0072B2" penwidth="2"];
+node_be2d6e2d -> node_d92666cd [color="#0072B2" penwidth="2"];
+subgraph cluster_10151279 {
+    label="File: chat_openai";
+    name="chat_openai";
+    style="filled";
+    graph[style=dotted];
+    subgraph cluster_425ca520 {
+        node_a0847ea5;
+        label="Class: ChatOpenAI";
+        name="ChatOpenAI";
+        style="filled";
+        graph[style=dotted];
+    };
+};
+subgraph cluster_f1bc5af1 {
+    node_5a2f8ae3 node_7567eff8 node_1bb85b5a node_17ca1554 node_1522da9e;
+    label="File: cli";
+    name="cli";
+    style="filled";
+    graph[style=dotted];
+};
+subgraph cluster_57d9d13b {
+    label="File: community_context";
+    name="community_context";
+    style="filled";
+    graph[style=dotted];
+    subgraph cluster_cf0e371c {
+        node_dd2f51e4;
+        label="Class: GlobalCommunityContext";
+        name="GlobalCommunityContext";
+        style="filled";
+        graph[style=dotted];
+    };
+};
+subgraph cluster_4379fd9c {
+    node_0ce9d6f4 node_58f7e3f0;
+    label="File: dfs";
+    name="dfs";
+    style="filled";
+    graph[style=dotted];
+};
+subgraph cluster_4576fe39 {
+    node_80ddfd0c node_a1c3fe68;
+    label="File: factories";
+    name="factories";
+    style="filled";
+    graph[style=dotted];
+};
+subgraph cluster_7d5b8ff0 {
+    node_be2d6e2d node_0d0f6948 node_d92666cd;
+    label="File: indexer_adapters";
+    name="indexer_adapters";
+    style="filled";
+    graph[style=dotted];
+};
+subgraph cluster_65782757 {
+    label="File: search";
+    name="search";
+    style="filled";
+    graph[style=dotted];
+    subgraph cluster_9252230b {
+        node_8b2007a6;
+        label="Class: GlobalSearch";
+        name="GlobalSearch";
+        style="filled";
+        graph[style=dotted];
+    };
+};
+subgraph cluster_36514204 {
+    node_ada10d99 node_255dddb0 node_41ad628e node_acc58014 node_19901c12;
+    label="File: utils";
+    name="utils";
+    style="filled";
+    graph[style=dotted];
+};
+}
