@@ -1121,7 +1121,7 @@ GENERAL_KNOWLEDGE_INSTRUCTION = """
 | 查询成本   | 成本高，由于需要广泛的上下文构建和多次LLM调用。<br/>特别是在全局搜索中成本更高 | 低，通常只涉及较少的计算资源，单次LLM调用                    |
 | 查询时间   | 时间长                                                       | 时间短                                                       |
 
-
+poetry build
 
 
 
