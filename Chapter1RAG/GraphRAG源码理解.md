@@ -20,9 +20,9 @@ GraphRAG核心思想：首先从源文档中派生一个实体知识图谱（通
 
 - graphRAG原理
 
-  ![image-20240801160103956](images/image-20240801160103956.png)
+  ![image-20240801160103956](images/原理1.jpg)
 
-graphRAG中的一些名词：
+graphRAG中的一些重要名词：
 
 **文档（Documents)**：输入的文档。
 
@@ -1121,7 +1121,7 @@ GENERAL_KNOWLEDGE_INSTRUCTION = """
 | 查询成本   | 成本高，由于需要广泛的上下文构建和多次LLM调用。<br/>特别是在全局搜索中成本更高 | 低，通常只涉及较少的计算资源，单次LLM调用                    |
 | 查询时间   | 时间长                                                       | 时间短                                                       |
 
-poetry build
+
 
 
 
