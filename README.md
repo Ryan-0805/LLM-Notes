@@ -4,7 +4,7 @@
 
 ## 目录 
 
-[GraphRAG源码理解](#Chapter1RAG/GraphRAG源码理解.md) 
+[GraphRAG源码理解](Chapter1RAG/GraphRAG源码理解.md) 
 
-[深入浅出RAG](#Chapter1RAG/深入浅出RAG.md) 
+[深入浅出RAG](Chapter1RAG/深入浅出RAG.md) 
 
